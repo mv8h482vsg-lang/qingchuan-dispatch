@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="青川派工">
+<title>青川派工沙盤</title>
+
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+ margin:0;
+ font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;
+ background:#f3f5f8;
+ color:#172033;
+}
+header{
+ background:#17243a;
+ color:#fff;
+ padding:calc(16px + env(safe-area-inset-top)) 16px 16px;
+ position:sticky;
+ top:0;
+ z-index:20;
+}
+header h1{margin:0;font-size:22px}
+header p{margin:4px 0 0;font-size:13px;opacity:.7}
+
+.panel{
+ background:#fff;
+ margin:12px;
+ padding:14px;
+ border-radius:18px;
+ box-shadow:0 2px 12px rgba(0,0,0,.06);
+}
+.title{
+ font-weight:800;
+ font-size:17px;
+ margin:6px 0 8px;
+}
+.inputRow{
+ display:flex;
+ gap:8px;
+ margin-bottom:8px;
+}
+input{
+ flex:1;
+ min-width:0;
+ border:1px solid #ccd4df;
+ border-radius:11px;
+ padding:12px;
+ font-size:16px;
+}
+button{font-family:inherit}
+.addBtn{
+ border:0;
+ background:#17243a;
+ color:#fff;
+ border-radius:11px;
+ padding:0 15px;
+ font-weight:800;
+ font-size:15px;
+}
+.tokens{
+ display:flex;
+ gap:7px;
+ overflow-x:auto;
+ min-height:46px;
+ padding:3px 0 9px;
+}
+.token{
+ border:2px solid transparent;
+ border-radius:999px;
+ padding:8px 12px;
+ white-space:nowrap;
+ font-size:14px;
+ font-weight:800;
+ background:#e7f1ff;
+ color:#16518f;
+}
+.token.car{
+ background:#fff0d9;
+ color:#87520b;
+}
+.token.selected{
+ border-color:#17243a;
+ box-shadow:0 0 0 2px #fff inset;
+}
+.help{
+ font-size:13px;
+ line-height:1.5;
+ color:#667085;
+}
+.pick{
+ display:none;
+ margin-top:8px;
+ background:#fff4c4;
+ padding:9px;
+ border-radius:10px;
+ font-size:14px;
+ font-weight:700;
+}
+.pick.show{display:block}
+
+.monthBar{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ margin:14px 12px 10px;
+}
+.monthBar button{
+ border:0;
+ background:#17243a;
+ color:#fff;
+ border-radius:11px;
+ padding:10px 14px;
+ font-weight:800;
+}
+.monthBar strong{font-size:20px}
+
+.calendarWrap{
+ overflow-x:auto;
+ padding-bottom:30px;
+}
+.week,
+.calendar{
+ min-width:1050px;
+ display:grid;
+ grid-template-columns:repeat(7,150px);
+ gap:5px;
+ padding:0 8px;
+}
+.week{
+ margin-bottom:5px;
+ text-align:center;
+ font-size:13px;
+ font-weight:800;
+ color:#687386;
+}
+.week div{padding:6px}
+
+.day{
+ background:#fff;
+ border:1px solid #dce2ea;
+ border-radius:12px;
+ min-height:205px;
+ padding:8px;
+ display:flex;
+ flex-direction:column;
+}
+.day.blank{
+ background:#e9edf2;
+ border-color:#e9edf2;
+}
+.date{
+ font-weight:900;
+ font-size:16px;
+ margin-bottom:6px;
+}
+.today .date{
+ color:#d33;
+}
+.drop{
+ border:1.5px dashed #bbc5d2;
+ border-radius:9px;
+ padding:5px;
+ min-height:70px;
+ display:flex;
+ align-content:flex-start;
+ flex-wrap:wrap;
+ gap:4px;
+}
+.drop.active{
+ background:#fff9db;
+ border-color:#d0a900;
+}
+.piece{
+ display:inline-flex;
+ align-items:center;
+ gap:3px;
+ border-radius:999px;
+ background:#e7f1ff;
+ padding:5px 7px;
+ font-size:12px;
+ font-weight:700;
+ max-width:100%;
+}
+.piece.car{background:#fff0d9}
+.remove{
+ border:0;
+ background:transparent;
+ color:#a53d3d;
+ padding:0 1px;
+ font-weight:900;
+ font-size:14px;
+}
+.note{
+ margin-top:7px;
+ width:100%;
+ min-height:86px;
+ resize:vertical;
+ border:1px solid #d3dae4;
+ border-radius:9px;
+ padding:7px;
+ font-family:inherit;
+ font-size:13px;
+ line-height:1.35;
+}
+.emptyText{
+ color:#98a2b3;
+ font-size:12px;
+ padding:5px;
+ pointer-events:none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <h1>青川派工沙盤</h1>
+ <p>私人推演・人員 × 車輛 × 月曆</p>
+</header>
+
+<section class="panel">
+
+ <div class="title">👷 人員棋子</div>
+
+ <div class="inputRow">
+  <input id="personInput" placeholder="輸入員工名稱">
+  <button class="addBtn" id="addPerson">＋新增</button>
+ </div>
+
+ <div class="tokens" id="peopleTokens"></div>
+
+ <div class="title">🚙 車輛棋子</div>
+
+ <div class="inputRow">
+  <input id="carInput" placeholder="輸入車名／車號，例如 Ranger">
+  <button class="addBtn" id="addCar">＋新增</button>
+ </div>
+
+ <div class="tokens" id="carTokens"></div>
+
+ <div class="pick" id="pickMessage"></div>
+
+ <div class="help">
+ 點一顆上方母棋子，再點月曆某一天的虛線區，即可複製到該日期。
+ 母棋子永遠保留，可以重複使用。<br>
+ 雙擊母棋子可以刪除。
+ </div>
+
+</section>
+
+<div class="monthBar">
+ <button id="prevMonth">← 上月</button>
+ <strong id="monthTitle"></strong>
+ <button id="nextMonth">下月 →</button>
+</div>
+
+<div class="calendarWrap">
+
+ <div class="week">
+  <div>日</div>
+  <div>一</div>
+  <div>二</div>
+  <div>三</div>
+  <div>四</div>
+  <div>五</div>
+  <div>六</div>
+ </div>
+
+ <div class="calendar" id="calendar"></div>
+
+</div>
+
+<script>
+(function(){
+
+const STORAGE_KEY="qingchuan_dispatch_v1";
+
+let state={
+ people:[],
+ cars:[],
+ plans:{},
+ notes:{},
+ year:new Date().getFullYear(),
+ month:new Date().getMonth()
+};
+
+let selected=null;
+
+try{
+ const saved=localStorage.getItem(STORAGE_KEY);
+ if(saved){
+  state={...state,...JSON.parse(saved)};
+ }
+}catch(e){}
+
+function save(){
+ try{
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+ }catch(e){}
+}
+
+function el(id){
+ return document.getElementById(id);
+}
+
+function dateKey(day){
+ return state.year+"-"+String(state.month+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+}
+
+function addPerson(){
+ const input=el("personInput");
+ const name=input.value.trim();
+
+ if(!name)return;
+
+ state.people.push(name);
+ input.value="";
+ save();
+ renderTokens();
+}
+
+function addCar(){
+ const input=el("carInput");
+ const name=input.value.trim();
+
+ if(!name)return;
+
+ state.cars.push(name);
+ input.value="";
+ save();
+ renderTokens();
+}
+
+el("addPerson").addEventListener("click",addPerson);
+el("addCar").addEventListener("click",addCar);
+
+el("personInput").addEventListener("keydown",function(e){
+ if(e.key==="Enter")addPerson();
+});
+
+el("carInput").addEventListener("keydown",function(e){
+ if(e.key==="Enter")addCar();
+});
+
+function selectToken(type,index,name){
+
+ selected={
+  type:type,
+  index:index,
+  name:name
+ };
+
+ renderTokens();
+ renderPickMessage();
+ renderCalendar();
+}
+
+function renderPickMessage(){
+
+ const box=el("pickMessage");
+
+ if(!selected){
+  box.className="pick";
+  box.textContent="";
+  return;
+ }
+
+ box.className="pick show";
+
+ box.textContent=
+ "已拿起："+
+ (selected.type==="car"?"🚙 ":"👷 ")+
+ selected.name+
+ " → 點下面日期的虛線區放入";
+}
+
+function renderTokens(){
+
+ const peopleBox=el("peopleTokens");
+ const carBox=el("carTokens");
+
+ peopleBox.innerHTML="";
+ carBox.innerHTML="";
+
+ state.people.forEach(function(name,index){
+
+  const b=document.createElement("button");
+
+  b.className=
+   "token"+
+   (selected &&
+    selected.type==="person" &&
+    selected.index===index
+    ?" selected":"");
+
+  b.textContent="👷 "+name;
+
+  b.addEventListener("click",function(){
+   selectToken("person",index,name);
+  });
+
+  b.addEventListener("dblclick",function(){
+
+   if(confirm("刪除人員棋子「"+name+"」？")){
+    state.people.splice(index,1);
+    selected=null;
+    save();
+    renderTokens();
+    renderPickMessage();
+    renderCalendar();
+   }
+
+  });
+
+  peopleBox.appendChild(b);
+ });
+
+ state.cars.forEach(function(name,index){
+
+  const b=document.createElement("button");
+
+  b.className=
+   "token car"+
+   (selected &&
+    selected.type==="car" &&
+    selected.index===index
+    ?" selected":"");
+
+  b.textContent="🚙 "+name;
+
+  b.addEventListener("click",function(){
+   selectToken("car",index,name);
+  });
+
+  b.addEventListener("dblclick",function(){
+
+   if(confirm("刪除車輛棋子「"+name+"」？")){
+    state.cars.splice(index,1);
+    selected=null;
+    save();
+    renderTokens();
+    renderPickMessage();
+    renderCalendar();
+   }
+
+  });
+
+  carBox.appendChild(b);
+ });
+
+}
+
+function addPieceToDay(key){
+
+ if(!selected)return;
+
+ if(!state.plans[key]){
+  state.plans[key]=[];
+ }
+
+ state.plans[key].push({
+  type:selected.type,
+  name:selected.name
+ });
+
+ save();
+ renderCalendar();
+}
+
+function removePiece(key,index){
+
+ state.plans[key].splice(index,1);
+
+ save();
+ renderCalendar();
+}
+
+function renderCalendar(){
+
+ const calendar=el("calendar");
+
+ calendar.innerHTML="";
+
+ el("monthTitle").textContent=
+ state.year+" 年 "+(state.month+1)+" 月";
+
+ const firstDay=
+  new Date(state.year,state.month,1).getDay();
+
+ const totalDays=
+  new Date(state.year,state.month+1,0).getDate();
+
+ const today=new Date();
+
+ for(let i=0;i<firstDay;i++){
+
+  const blank=document.createElement("div");
+
+  blank.className="day blank";
+
+  calendar.appendChild(blank);
+ }
+
+ for(let day=1;day<=totalDays;day++){
+
+  const key=dateKey(day);
+
+  const box=document.createElement("div");
+
+  box.className="day";
+
+  if(
+   today.getFullYear()===state.year &&
+   today.getMonth()===state.month &&
+   today.getDate()===day
+  ){
+   box.classList.add("today");
+  }
+
+  const date=document.createElement("div");
+
+  date.className="date";
+
+  date.textContent=day+" 號";
+
+  const drop=document.createElement("div");
+
+  drop.className=
+   "drop"+(selected?" active":"");
+
+  drop.addEventListener("click",function(){
+   addPieceToDay(key);
+  });
+
+  const pieces=state.plans[key]||[];
+
+  if(pieces.length===0){
+
+   const empty=document.createElement("span");
+
+   empty.className="emptyText";
+
+   empty.textContent=
+    selected?"點這裡放入棋子":"尚未派工";
+
+   drop.appendChild(empty);
+
+  }else{
+
+   pieces.forEach(function(piece,index){
+
+    const chip=document.createElement("span");
+
+    chip.className=
+     "piece "+(piece.type==="car"?"car":"");
+
+    const label=document.createElement("span");
+
+    label.textContent=
+     (piece.type==="car"?"🚙 ":"👷 ")+piece.name;
+
+    const remove=document.createElement("button");
+
+    remove.className="remove";
+
+    remove.textContent="×";
+
+    remove.addEventListener("click",function(e){
+
+     e.stopPropagation();
+
+     removePiece(key,index);
+
+    });
+
+    chip.appendChild(label);
+    chip.appendChild(remove);
+
+    drop.appendChild(chip);
+
+   });
+
+  }
+
+  const note=document.createElement("textarea");
+
+  note.className="note";
+
+  note.placeholder="注記事項，例如：\\n美光 P2\\n07:30 入場\\nSUP施工";
+
+  note.value=state.notes[key]||"";
+
+  note.addEventListener("input",function(){
+
+   state.notes[key]=note.value;
+
+   save();
+
+  });
+
+  box.appendChild(date);
+  box.appendChild(drop);
+  box.appendChild(note);
+
+  calendar.appendChild(box);
+ }
+
+}
+
+el("prevMonth").addEventListener("click",function(){
+
+ state.month--;
+
+ if(state.month<0){
+  state.month=11;
+  state.year--;
+ }
+
+ save();
+ renderCalendar();
+});
+
+el("nextMonth").addEventListener("click",function(){
+
+ state.month++;
+
+ if(state.month>11){
+  state.month=0;
+  state.year++;
+ }
+
+ save();
+ renderCalendar();
+});
+
+renderTokens();
+renderPickMessage();
+renderCalendar();
+
+})();
+</script>
+
+</body>
+</html>
